@@ -30,17 +30,12 @@ function handleMeetingEdit(e) {
     return; 
   }
 
-  const newValue = e.value ? String(e.value).trim() : "";
-  const oldValue = e.oldValue ? String(e.oldValue).trim() : "";
-
-// 시트 체크 (사용자가 설정한 인덱스 확인)
-  if (sheet.getIndex() !== CONFIG.SHEET_INDEX) return;
-
-  // 3. 입력된 값이 팀 코드 형식(예: A401)인지 확인
+  const newValue = e.value ? String(e.value).trim() : String(range.getValue()).trim();
+  
   const teamCodePattern = /^[A-Z]\d{3}$/;
   let message = "";
 
- // [신청] 값이 입력되었을 때
+  // [신청] 값이 입력되었을 때 (타이핑 또는 붙여넣기)
   if (teamCodePattern.test(newValue)) {
     const dateLabel = getFormattedDate(sheet, col);
     const timeLabel = String(sheet.getRange(row, CONFIG.TIME_COL).getDisplayValue());
@@ -52,15 +47,21 @@ function handleMeetingEdit(e) {
               `👉 [시트 바로가기](${e.source.getUrl()})`;
   }
   // [취소] 값이 지워졌을 때
-  else if (!newValue && teamCodePattern.test(oldValue)) {
-    const dateLabel = getFormattedDate(sheet, col);
-    const timeLabel = String(sheet.getRange(row, CONFIG.TIME_COL).getDisplayValue());
+  else if (!newValue) {
+    // 취소의 경우 oldValue 패턴 체크가 필요하지만, 붙여넣기 시 oldValue를 알 수 없으므로
+    // 필요하다면 이 조건문을 좀 더 완화하거나 지금처럼 유지할 수 있습니다.
+    const oldValue = e.oldValue ? String(e.oldValue).trim() : "";
+    
+    if (teamCodePattern.test(oldValue)) {
+      const dateLabel = getFormattedDate(sheet, col);
+      const timeLabel = String(sheet.getRange(row, CONFIG.TIME_COL).getDisplayValue());
 
-    message = `### :cryingloopy: **팀 미팅 취소 알림** :cryingloopy: \n` +
-              `- **날짜**: ${dateLabel}\n` +
-              `- **시간**: ${timeLabel}\n` +
-              `- **팀 코드**: ${oldValue}\n` +
-              `👉 [시트 바로가기](${e.source.getUrl()})`;
+      message = `### :cryingloopy: **팀 미팅 취소 알림** :cryingloopy: \n` +
+                `- **날짜**: ${dateLabel}\n` +
+                `- **시간**: ${timeLabel}\n` +
+                `- **팀 코드**: ${oldValue}\n` +
+                `👉 [시트 바로가기](${e.source.getUrl()})`;
+    }
   }
 
   if (message) {
